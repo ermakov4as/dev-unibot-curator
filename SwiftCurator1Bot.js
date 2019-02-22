@@ -19,13 +19,14 @@ var commands = [
     }
 ];
 
-var user_data = [ // Или здесь БД нужна?
+var user_data = [
     {
-        "name": null,
-        "local_id": null,
-        "status_thread": null
+        /*"name": null,
+        "GUID": null*/
     }
 ];
+
+var error_message = "Неверный ввод.";
 
 var states = [
     {
@@ -37,17 +38,17 @@ var states = [
         "inputs": [
             {   
                 "type": "text",
-                "value": value, // Корректна ли запись?
-                "action": function(token){ // Как получить value?
-                    var result = serv.login(token); // Написать функцию
-                    //result: {name": "Ivan", "local_id": 12345678, "status_thread": "50%"}
-                    if (result.local_id) {
-                        user_data = result;
+                "value": true, // Корректна ли запись?+++ // true - любая запись, значение - если ввёл это значение
+                "action": function(value){ // Как получить value?
+                    var name = serv.login(value); // Написать функцию
+                    //result: {name": "Ivan", "local_id": 12345678} // name: false или text
+                    if (name) {
+                        //user_data = result;
                         return { 
                             "state_name": "main",
                             "output": {
                                 "type": "text",
-                                "body": "Привет, " + user_data.name + '!'
+                                "body": "Привет, " + /*user_data.name*/name + '!'
                             }
                         };
                     } else {
@@ -121,21 +122,19 @@ var states = [
         "state_name": "practice", // Нужно использовать данные, которые получатся с запроса. 
         //Т.е., сперва - вызвать запрос, затем - использовать данные от него. Как это сделать?
         "pre_out": function() {
-            var lessons = serv.getLessons(user_data.local_id); // Функция не описана. 
+            let lessons = serv.getLessons(user_data.local_id); // Функция не описана. 
+            //text_result - from lessons
+            //keyboard = [] from text_result
             return {
                 "type": "text",
-                "body": 'Раздел "ПРАКТИКА"\n' + lessons, // Как бы сюда вставить цикл по lessons?..
-                "keyboard": [
-                    [
-
-                    ], // Как бы сюда вставить цикл по lessons?..
-                    [
+                "body": 'Раздел "ПРАКТИКА"\n' + text_result, // Как бы сюда вставить цикл по lessons?..
+                "keyboard": keyboard 
+                   /* [
                         {
                             "value": "goMain",
                             "text": "На главную",
                         }
-                    ]
-                ]
+                    ]*/
             };
         },
         "inputs": [
@@ -157,7 +156,7 @@ var states = [
         "state_name": "ask_question",
         "pre_out": {
             "type": "text",
-            "body": "Чем могу помочь?", // Я бы перенёс в Main на "после нажатия"
+            "body": "Чем могу помочь?", // Я бы перенёс в Main на "после нажатия"+++
             "keyboard": [
                 [
                     {
@@ -180,8 +179,13 @@ var states = [
             {
                 "type": "text",
                 "value": value, // -//-
-                "action": function(value){ // Как реализовать диалог?
+                // после отправки сбщ - выскакивает "на главную" под сбщ и удаляется старая на главную
+                // если что-то происходит - удаление "на главную"
+                "action": function(value){ // Как реализовать диалог? 
+                // только отправить, ответ придёт по вебхуку и выскочит если мы здесь или если прошло более 1 мин бездействия
+                // со всего хранить время последнего взаимодействия
                     return { 
+                        "remove": 1, // 1 последнее сбщ
                         "state_name": "ask_question", 
                         "output": { //
 
